@@ -1,21 +1,63 @@
 version: "3.7"
 
 services:
-
-  app_proxy:
+  # 1. PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: miningcore-db
+    restart: unless-stopped
     environment:
-      APP_HOST: retro-mike-miningcore-webui_web_1
-      APP_PORT: 8080
-  web:
-    image: theretromike/miningcorewebui
-#    ports:
-#      - 5002:8080
-    restart: on-failure
+      - POSTGRES_USER=miningcore
+      - POSTGRES_PASSWORD=miningcore
+      - POSTGRES_DB=miningcore
     volumes:
-      - /home/umbrel/.miningcore:/app/miningcore
+      - /home/umbrel/umbrel/app-data/miningcore/postgres:/var/lib/postgresql/data
+
+  # 2. Miningcore Server Engine
+  server:
+    image: theretromike/miningcore
+    container_name: miningcore-server
     user: "1000:1000"
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - db
+    volumes:
+      - /home/umbrel/umbrel/app-data/miningcore/coins.json:/app/build/coins.json
+      - /home/umbrel/umbrel/app-data/miningcore/config.json:/app/config.json
+      - /home/umbrel/umbrel/app-data/retro-mike-vtc-node/.vertcoin:/.vertcoin
+    ports:
+      - 6001-6025:6001-6025
+      - 6201-6225:6201-6225
+      - 6301-6325:6301-6325
+      - 6401-6425:6401-6425
+      - 4000:4000
+
+  # 3. Miningcore Web-UI (Dashboard via http://umbrel.local:5002)
+  webui:
+    image: theretromike/miningcorewebui
+    container_name: miningcore-webui
+    user: "1000:1000"
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - 5002:8080
+    volumes:
+      - /home/umbrel/umbrel/app-data/miningcore:/app/miningcore
+      - /home/umbrel/umbrel/app-data/miningcore/icons:/var/www/html/img/coin/icon
     environment:
       - POOL_NAME=Self-Hosted Mining Pool
       - STRATUM_HOST=umbrel.local
-      - API_BASE_URL=http://retro-mike-miningcore_server_1:4000/api
-      - PLATFORM=UMBREL 
+      - API_BASE_URL=http://miningcore-server:4000/api
+      - PLATFORM=UMBREL
+
+  # 4. Dozzle (Live Docker Logs viewer via http://umbrel.local:8085)
+  logs:
+    image: amir20/dozzle:v8.12.8@sha256:8ff3115c9c9dd7576839df6f2575de345ca7cafa398cf2496f1f19c31d862ac1
+    container_name: miningcore-logs
+    restart: on-failure
+    ports:
+      - 8085:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
