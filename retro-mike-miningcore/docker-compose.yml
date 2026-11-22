@@ -11,14 +11,14 @@ services:
     user: "1000:1000"
     init: true
     volumes:
-      - /home/umbrel/.miningcore/coins.json:/app/build/coins.json
-      - /home/umbrel/.miningcore/config.json:/app/config.json
+      - /home/umbrel/umbrel/app-data/miningcore/coins.json:/app/build/coins.json
+      - /home/umbrel/umbrel/app-data/miningcore/config.json:/app/config.json
       - /home/umbrel/umbrel/app-data/retro-mike-vtc-node/.vertcoin:/.vertcoin
     ports:
-      - 6001-6025:6001-6025
-      - 6201-6225:6201-6225
-      - 6301-6325:6301-6325
-      - 6401-6425:6401-6425
+      - 6001-6050:6001-6050
+      - 6201-6250:6201-6250
+      - 6301-6350:6301-6350
+      - 6401-6450:6401-6450
       - 4000:4000
   web:
     image: amir20/dozzle:v8.12.8@sha256:8ff3115c9c9dd7576839df6f2575de345ca7cafa398cf2496f1f19c31d862ac1
